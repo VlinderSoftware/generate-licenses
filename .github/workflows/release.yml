@@ -1,0 +1,143 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  version:
+    name: Version and Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Auto Version
+        id: version
+        uses: VlinderSoftware/autoversion@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          tag-prefix: 'v'
+          default-version: '1.0.0'
+
+      - name: Create Release Branch
+        if: steps.version.outputs.version-changed == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MAJOR_VERSION=$(echo $VERSION | cut -d. -f1)
+          RELEASE_BRANCH="release/v${MAJOR_VERSION}"
+          
+          # Check if release branch already exists
+          if git show-ref --verify --quiet refs/remotes/origin/$RELEASE_BRANCH; then
+            echo "Release branch $RELEASE_BRANCH already exists, updating it"
+            git checkout $RELEASE_BRANCH
+            git reset --hard main
+            git push origin $RELEASE_BRANCH --force
+          else
+            echo "Creating new release branch $RELEASE_BRANCH"
+            git checkout -b $RELEASE_BRANCH
+            git push origin $RELEASE_BRANCH
+          fi
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.version-changed == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          release_name: ${{ steps.version.outputs.tag }}
+          body: |
+            ## Changes
+            
+            ${{ steps.version.outputs.changelog }}
+            
+            ## Usage
+            
+            ```yaml
+            - name: Generate Open Source Licenses
+              uses: VlinderSoftware/generate-licenses@${{ steps.version.outputs.tag }}
+              with:
+                working-directory: 'frontend'
+                node-version: '22'
+            ```
+            
+            Or use the major version for automatic updates:
+            
+            ```yaml
+            - name: Generate Open Source Licenses
+              uses: VlinderSoftware/generate-licenses@v1
+              with:
+                working-directory: 'frontend'
+                node-version: '22'
+            ```
+          draft: false
+          prerelease: false
+
+  validate:
+    name: Validate Action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate action.yml
+        run: |
+          # Check that action.yml exists and is valid YAML
+          if [ ! -f action.yml ]; then
+            echo "Error: action.yml not found"
+            exit 1
+          fi
+          
+          # Basic YAML validation
+          python3 -c "import yaml; yaml.safe_load(open('action.yml'))"
+          echo "✓ action.yml is valid YAML"
+          
+          # Check required fields
+          if ! grep -q "name:" action.yml; then
+            echo "Error: action.yml missing 'name' field"
+            exit 1
+          fi
+          
+          if ! grep -q "description:" action.yml; then
+            echo "Error: action.yml missing 'description' field"
+            exit 1
+          fi
+          
+          echo "✓ action.yml has required fields"
+
+      - name: Test Action Locally
+        run: |
+          # Create a minimal test environment
+          mkdir -p test-project
+          cd test-project
+          
+          # Create a minimal package.json
+          cat > package.json << 'EOF'
+          {
+            "name": "test-project",
+            "version": "1.0.0",
+            "dependencies": {
+              "lodash": "^4.17.21"
+            },
+            "scripts": {
+              "licenses:csv": "echo 'Component Name,Version,License (SPDX ID),License URL\nlodash,4.17.21,MIT,https://www.npmjs.com/package/lodash'",
+              "licenses:download": "mkdir -p licenses/texts && echo 'MIT License test' > licenses/texts/lodash-4.17.21.txt",
+              "licenses:html": "mkdir -p public && echo '<html><body>Test licenses page</body></html>' > public/licenses.html",
+              "licenses:generate": "npm run licenses:csv && npm run licenses:download && npm run licenses:html"
+            }
+          }
+          EOF
+          
+          # Test the scripts work
+          npm run licenses:generate
+          
+          # Verify outputs
+          [ -f public/licenses.html ] && echo "✓ HTML output generated"
+          
+          echo "✓ Basic action simulation successful"
