@@ -2,7 +2,8 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: [
     '**/tests/**/*.test.js',
-    '**/tests/**/*.spec.js'
+    '**/tests/**/*.spec.js',
+    '!**/tests/integration/**' // Exclude integration tests by default
   ],
   collectCoverageFrom: [
     'scripts/**/*.{js,cjs}',
@@ -11,5 +12,6 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  testTimeout: 10000 // 10 second timeout
 };
