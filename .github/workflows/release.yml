@@ -25,7 +25,7 @@ jobs:
           tag-prefix: 'v'
 
       - name: Create Release Branch
-        if: steps.version.outputs.version-changed == 'true'
+        if: steps.version.outputs.version-changed == 'true' && github.ref == 'refs/heads/main'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           MAJOR_VERSION=$(echo $VERSION | cut -d. -f1)
@@ -44,7 +44,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        if: steps.version.outputs.version-changed == 'true'
+        if: steps.version.outputs.tag != '' && (steps.version.outputs.version-changed == 'true' || startsWith(github.ref, 'refs/heads/release/v'))
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
