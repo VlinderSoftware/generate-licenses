@@ -10,9 +10,9 @@ const path = require('path');
 const { execSync } = require('child_process');
 const yaml = require('js-yaml');
 
-const OUTPUT_CSV = path.join(__dirname, '../licenses/licenses.csv');
+const OUTPUT_CSV = path.join(process.cwd(), 'licenses/licenses.csv');
 const OUTPUT_DIR = path.dirname(OUTPUT_CSV);
-const OVERRIDES_FILE = path.join(__dirname, '../../.github/license-overrides.yml');
+const OVERRIDES_FILE = path.join(process.cwd(), '.github/license-overrides.yml');
 
 // Ensure output directory exists
 if (!fs.existsSync(OUTPUT_DIR)) {
@@ -41,7 +41,7 @@ console.log('Generating licenses CSV...');
 let npmList;
 try {
   npmList = execSync('npm list --json --all --long --omit=peer', {
-    cwd: path.join(__dirname, '..'),
+    cwd: process.cwd(),
     encoding: 'utf8',
     maxBuffer: 10 * 1024 * 1024, // 10MB buffer
   });

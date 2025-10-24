@@ -13,11 +13,11 @@ from jinja2 import Environment, FileSystemLoader
 
 # Paths
 SCRIPT_DIR = Path(__file__).parent
-FRONTEND_DIR = SCRIPT_DIR.parent
-CSV_FILE = FRONTEND_DIR / 'licenses' / 'licenses.csv'
-LICENSES_DIR = FRONTEND_DIR / 'licenses' / 'texts'
+WORKING_DIR = Path.cwd()
+CSV_FILE = WORKING_DIR / 'licenses' / 'licenses.csv'
+LICENSES_DIR = WORKING_DIR / 'licenses' / 'texts'
 TEMPLATE_FILE = SCRIPT_DIR / 'licenses.html.j2'
-OUTPUT_FILE = FRONTEND_DIR / 'public' / 'licenses.html'
+OUTPUT_FILE = WORKING_DIR / 'public' / 'licenses.html'
 
 def sanitize_filename(name, version):
     """Create sanitized filename matching download script"""

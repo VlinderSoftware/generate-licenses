@@ -10,8 +10,8 @@ const path = require('path');
 const https = require('https');
 const { execSync } = require('child_process');
 
-const LICENSES_DIR = path.join(__dirname, '../licenses/texts');
-const CACHE_FILE = path.join(__dirname, '../licenses/cache.json');
+const LICENSES_DIR = path.join(process.cwd(), 'licenses/texts');
+const CACHE_FILE = path.join(process.cwd(), 'licenses/cache.json');
 
 // Ensure output directory exists
 if (!fs.existsSync(LICENSES_DIR)) {
@@ -30,7 +30,7 @@ console.log('Downloading license files...');
 let npmList;
 try {
   npmList = execSync('npm list --json --all --omit=peer', {
-    cwd: path.join(__dirname, '..'),
+    cwd: process.cwd(),
     encoding: 'utf8',
     maxBuffer: 10 * 1024 * 1024,
   });
