@@ -44,23 +44,23 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        if: steps.version.outputs.tag != '' && (steps.version.outputs.version-changed == 'true' || startsWith(github.ref, 'refs/heads/release/v'))
+        if: steps.version.outputs.patch-tag != ''
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          release_name: ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.version.outputs.patch-tag }}
+          release_name: ${{ steps.version.outputs.patch-tag }}
           body: |
             ## Changes
             
-            ${{ steps.version.outputs.changelog }}
+            Automated release for version ${{ steps.version.outputs.version }}
             
             ## Usage
             
             ```yaml
             - name: Generate Open Source Licenses
-              uses: VlinderSoftware/generate-licenses@${{ steps.version.outputs.tag }}
+              uses: VlinderSoftware/generate-licenses@${{ steps.version.outputs.patch-tag }}
               with:
                 working-directory: 'frontend'
                 node-version: '22'
