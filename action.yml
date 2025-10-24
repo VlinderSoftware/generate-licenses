@@ -1,0 +1,80 @@
+name: 'Generate Licenses'
+description: 'Generate license CSV, download license texts with caching, and create HTML page'
+
+inputs:
+  working-directory:
+    description: 'Directory containing package.json (e.g., frontend)'
+    required: true
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '22'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install Python dependencies
+      shell: bash
+      run: pip install Jinja2
+
+    - name: Generate licenses CSV
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npm run licenses:csv
+
+    - name: Create cache key from CSV
+      id: cache-key
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        # Create a hash of the CSV file to use as cache key
+        CSV_HASH=$(sha256sum licenses/licenses.csv | cut -d' ' -f1 | cut -c1-8)
+        echo "csv-hash=${CSV_HASH}" >> $GITHUB_OUTPUT
+        echo "Cache key will be: licenses-${CSV_HASH}"
+
+    - name: Restore cached license files
+      id: cache-licenses
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.working-directory }}/licenses/texts
+        key: licenses-${{ steps.cache-key.outputs.csv-hash }}
+        restore-keys: |
+          licenses-
+
+    - name: Download license files
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npm run licenses:download
+
+    - name: Generate licenses HTML
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npm run licenses:html
+
+    - name: Display license summary
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "📊 License Generation Summary:"
+        echo "=============================="
+        if [ -f licenses/licenses.csv ]; then
+          LICENSE_COUNT=$(tail -n +2 licenses/licenses.csv | wc -l)
+          echo "Total packages: ${LICENSE_COUNT}"
+        fi
+        if [ -d licenses/texts ]; then
+          FILE_COUNT=$(find licenses/texts -type f | wc -l)
+          echo "Downloaded license files: ${FILE_COUNT}"
+        fi
+        if [ -f public/licenses.html ]; then
+          echo "✓ Generated public/licenses.html"
+        fi
