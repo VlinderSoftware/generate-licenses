@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Source Licenses - DocXchange</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #212529;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        .intro {
+            color: #6c757d;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .summary {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+
+        .summary h2 {
+            color: #495057;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .license-counts {
+            margin-top: 15px;
+        }
+
+        .license-count-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .license-count-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-box {
+            margin-bottom: 30px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            transition: border-color 0.15s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .licenses-list {
+            margin-top: 30px;
+        }
+
+        .license-item {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .license-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.15s;
+        }
+
+        .license-header:hover {
+            background: #e9ecef;
+        }
+
+        .license-info {
+            flex: 1;
+        }
+
+        .license-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #212529;
+            margin-bottom: 5px;
+        }
+
+        .license-meta {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .license-badge {
+            background: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+
+        .toggle-icon {
+            color: #6c757d;
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+
+        .license-item.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .license-content {
+            display: none;
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .license-item.expanded .license-content {
+            display: block;
+        }
+
+        .license-text {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .license-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .license-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <h1>Open Source Licenses</h1>
+        <p class="intro">
+            DocXchange is built on the shoulders of giants. This page lists all open source 
+            software components used in this application, along with their respective licenses.
+        </p>
+
+        <div class="summary">
+            <h2>Summary</h2>
+            <div class="summary-stats">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_count }}</div>
+                    <div class="stat-label">Total Packages</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ license_counts|length }}</div>
+                    <div class="stat-label">Unique Licenses</div>
+                </div>
+            </div>
+            
+            <div class="license-counts">
+                <strong>License Distribution:</strong>
+                {% for license_id, count in license_counts[:10] %}
+                <div class="license-count-item">
+                    <span>{{ license_id }}</span>
+                    <span><strong>{{ count }}</strong> packages</span>
+                </div>
+                {% endfor %}
+                {% if license_counts|length > 10 %}
+                <div class="license-count-item">
+                    <span><em>... and {{ license_counts|length - 10 }} more</em></span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search packages by name..." />
+        </div>
+
+        <div class="licenses-list" id="licensesList">
+            {% for license in licenses %}
+            <div class="license-item" data-name="{{ license.name|lower }}" data-license="{{ license.license|lower }}">
+                <div class="license-header" onclick="toggleLicense(this)">
+                    <div class="license-info">
+                        <div class="license-name">{{ license.name }}</div>
+                        <div class="license-meta">
+                            Version: {{ license.version }}
+                            <span class="license-badge">{{ license.license }}</span>
+                        </div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="license-content">
+                    {% if license.license_text %}
+                    <div class="license-text">{{ license.license_text }}</div>
+                    {% else %}
+                    <p>License text not available.</p>
+                    {% endif %}
+                    {% if license.license_url %}
+                    <a href="{{ license.license_url }}" target="_blank" rel="noopener noreferrer" class="license-link">
+                        View on npm →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="no-results" id="noResults" style="display: none;">
+            No packages found matching your search.
+        </div>
+    </div>
+
+    <script>
+        function toggleLicense(header) {
+            const item = header.parentElement;
+            item.classList.toggle('expanded');
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const licensesList = document.getElementById('licensesList');
+        const noResults = document.getElementById('noResults');
+        const licenseItems = document.querySelectorAll('.license-item');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            let visibleCount = 0;
+
+            licenseItems.forEach(item => {
+                const name = item.getAttribute('data-name');
+                const license = item.getAttribute('data-license');
+                
+                if (name.includes(searchTerm) || license.includes(searchTerm)) {
+                    item.style.display = '';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (visibleCount === 0) {
+                licensesList.style.display = 'none';
+                noResults.style.display = 'block';
+            } else {
+                licensesList.style.display = '';
+                noResults.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -4,7 +4,14 @@
   "description": "GitHub Action for generating comprehensive open source license reports from npm dependencies",
   "main": "action.yml",
   "scripts": {
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --config jest.integration.config.js",
+    "licenses:csv": "node scripts/generate-licenses-csv.cjs",
+    "licenses:download": "node scripts/download-licenses.cjs",
+    "licenses:html": "python3 scripts/generate-licenses-html.py",
+    "licenses:generate": "npm run licenses:csv && npm run licenses:download && npm run licenses:html"
   },
   "repository": {
     "type": "git",
@@ -23,5 +30,12 @@
   "bugs": {
     "url": "https://github.com/VlinderSoftware/generate-licenses/issues"
   },
-  "homepage": "https://github.com/VlinderSoftware/generate-licenses#readme"
+  "homepage": "https://github.com/VlinderSoftware/generate-licenses#readme",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "js-yaml": "^4.1.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
 }
