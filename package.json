@@ -3,6 +3,18 @@
   "version": "1.0.0",
   "description": "GitHub Action for generating comprehensive open source license reports from npm dependencies",
   "main": "action.yml",
+  "bin": {
+    "generate-licenses-csv": "./scripts/generate-licenses-csv.cjs",
+    "download-licenses": "./scripts/download-licenses.cjs",
+    "generate-licenses-html": "./scripts/generate-licenses-html.py"
+  },
+  "files": [
+    "scripts/",
+    "templates/",
+    "action.yml",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "jest",
     "test:unit": "jest --testPathIgnorePatterns=integration",
