@@ -192,4 +192,15 @@ async function processPackages() {
   }
 }
 
-processPackages().catch(console.error);
+// Main execution
+async function main() {
+  try {
+    await processPackages();
+    process.exit(0);
+  } catch (error) {
+    console.error('Error:', error);
+    process.exit(1);
+  }
+}
+
+main();
