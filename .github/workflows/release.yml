@@ -100,11 +100,14 @@ jobs:
           draft: false
           prerelease: false
 
-  publish-npm:
-    name: Publish to NPM
+  publish-github-packages:
+    name: Publish to GitHub Packages
     runs-on: ubuntu-latest
     needs: version
     if: needs.version.outputs.version-created == 'true'
+    permissions:
+      contents: read
+      packages: write
     
     steps:
       - name: Checkout code
@@ -116,7 +119,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: 'https://npm.pkg.github.com'
 
       - name: Install dependencies
         run: npm install
@@ -127,17 +130,17 @@ jobs:
           npm version $VERSION --no-git-tag-version
           echo "Updated package.json to version $VERSION"
 
-      - name: Publish to NPM
-        run: npm publish --access public
+      - name: Publish to GitHub Packages
+        run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify publish
         run: |
-          sleep 10  # Wait for npm to propagate
+          sleep 10  # Wait for GitHub Packages to propagate
           VERSION="${{ needs.version.outputs.version }}"
-          npm view @vlindersoftware/generate-licenses@$VERSION
-          echo "✓ Package successfully published to NPM"
+          echo "✓ Package successfully published to GitHub Packages"
+          echo "Install with: npm install @vlindersoftware/generate-licenses@$VERSION --registry=https://npm.pkg.github.com"
 
   validate:
     name: Validate Action
