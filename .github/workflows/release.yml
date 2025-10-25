@@ -4,13 +4,19 @@ on:
   push:
     branches: [main, 'release/v*']
   pull_request:
-    branches: [main]
+    branches: [main, 'release/v*']
+    types: [closed]
 
 jobs:
   version:
     name: Version and Release
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/v'))
+    if: |
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/v'))) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && 
+       (github.event.pull_request.head.ref == 'main' || startsWith(github.event.pull_request.head.ref, 'release/v')) &&
+       github.actor == 'dependabot[bot]')
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,7 +31,7 @@ jobs:
           tag-prefix: 'v'
 
       - name: Create Release Branch
-        if: steps.version.outputs.version-changed == 'true' && github.ref == 'refs/heads/main'
+        if: steps.version.outputs.patch-tag != '' && github.ref == 'refs/heads/main'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           MAJOR_VERSION=$(echo $VERSION | cut -d. -f1)
