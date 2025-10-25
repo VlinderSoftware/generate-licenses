@@ -13,10 +13,14 @@ from jinja2 import Environment, FileSystemLoader
 
 # Paths
 SCRIPT_DIR = Path(__file__).parent
+PACKAGE_DIR = SCRIPT_DIR.parent  # One level up from scripts/
 WORKING_DIR = Path.cwd()
 CSV_FILE = WORKING_DIR / 'licenses' / 'licenses.csv'
 LICENSES_DIR = WORKING_DIR / 'licenses' / 'texts'
-TEMPLATE_FILE = SCRIPT_DIR / 'licenses.html.j2'
+# Try templates directory first, fall back to scripts directory
+TEMPLATE_FILE = PACKAGE_DIR / 'templates' / 'licenses.html.j2'
+if not TEMPLATE_FILE.exists():
+    TEMPLATE_FILE = SCRIPT_DIR / 'licenses.html.j2'
 OUTPUT_FILE = WORKING_DIR / 'public' / 'licenses.html'
 
 def sanitize_filename(name, version):
@@ -81,7 +85,8 @@ def generate_html():
     )
     
     # Setup Jinja2
-    env = Environment(loader=FileSystemLoader(SCRIPT_DIR))
+    template_dir = TEMPLATE_FILE.parent
+    env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template('licenses.html.j2')
     
     # Render template
