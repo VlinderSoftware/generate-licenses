@@ -12,7 +12,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 # Paths
-SCRIPT_DIR = Path(__file__).parent
+SCRIPT_DIR = Path(__file__).resolve().parent
 PACKAGE_DIR = SCRIPT_DIR.parent  # One level up from scripts/
 WORKING_DIR = Path.cwd()
 CSV_FILE = WORKING_DIR / 'licenses' / 'licenses.csv'
