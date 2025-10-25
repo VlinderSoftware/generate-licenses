@@ -17,11 +17,36 @@ PACKAGE_DIR = SCRIPT_DIR.parent  # One level up from scripts/
 WORKING_DIR = Path.cwd()
 CSV_FILE = WORKING_DIR / 'licenses' / 'licenses.csv'
 LICENSES_DIR = WORKING_DIR / 'licenses' / 'texts'
-# Try templates directory first, fall back to scripts directory
-TEMPLATE_FILE = PACKAGE_DIR / 'templates' / 'licenses.html.j2'
-if not TEMPLATE_FILE.exists():
-    TEMPLATE_FILE = SCRIPT_DIR / 'licenses.html.j2'
 OUTPUT_FILE = WORKING_DIR / 'public' / 'licenses.html'
+
+# Template resolution order:
+# 1. User's local template (working directory)
+# 2. Package template (installed with action)
+# 3. Legacy template (for backward compatibility)
+LOCAL_TEMPLATE = WORKING_DIR / 'licenses.html.j2'
+PACKAGE_TEMPLATE = PACKAGE_DIR / 'templates' / 'licenses.html.j2'
+LEGACY_TEMPLATE = SCRIPT_DIR / 'licenses.html.j2'
+
+def find_template():
+    """Find the template file, prioritizing user's local template"""
+    if LOCAL_TEMPLATE.exists():
+        print(f"Using local template: {LOCAL_TEMPLATE}")
+        return LOCAL_TEMPLATE
+    elif PACKAGE_TEMPLATE.exists():
+        print(f"Using package template: {PACKAGE_TEMPLATE}")
+        return PACKAGE_TEMPLATE
+    elif LEGACY_TEMPLATE.exists():
+        print(f"Using legacy template: {LEGACY_TEMPLATE}")
+        return LEGACY_TEMPLATE
+    else:
+        raise FileNotFoundError(
+            f"No template found. Searched:\n"
+            f"  1. Local: {LOCAL_TEMPLATE}\n"
+            f"  2. Package: {PACKAGE_TEMPLATE}\n"
+            f"  3. Legacy: {LEGACY_TEMPLATE}\n"
+            f"\nTo customize the template, copy the default template to your project root:\n"
+            f"  cp {PACKAGE_TEMPLATE} {LOCAL_TEMPLATE}"
+        )
 
 def sanitize_filename(name, version):
     """Create sanitized filename matching download script"""
@@ -84,10 +109,11 @@ def generate_html():
         reverse=True
     )
     
-    # Setup Jinja2
-    template_dir = TEMPLATE_FILE.parent
+    # Find and setup template
+    template_file = find_template()
+    template_dir = template_file.parent
     env = Environment(loader=FileSystemLoader(template_dir))
-    template = env.get_template('licenses.html.j2')
+    template = env.get_template(template_file.name)
     
     # Render template
     html = template.render(

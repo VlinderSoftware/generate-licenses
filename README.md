@@ -81,6 +81,55 @@ jobs:
         working-directory: frontend
 ```
 
+## Template Customization
+
+The action generates an HTML page using a Jinja2 template. You can customize the appearance by providing your own template:
+
+### Using a Custom Template
+
+1. **Copy the default template to your project:**
+   ```bash
+   # If using the npm package
+   cp node_modules/@vlindersoftware/generate-licenses/templates/licenses.html.j2 licenses.html.j2
+   
+   # Or download from GitHub
+   curl -o licenses.html.j2 https://raw.githubusercontent.com/VlinderSoftware/generate-licenses/main/templates/licenses.html.j2
+   ```
+
+2. **Customize the template** to match your application's styling
+3. **Run the action** - it will automatically detect and use your local template
+
+### Template Resolution Order
+
+The HTML generator looks for templates in this order:
+1. **Local template**: `./licenses.html.j2` (in your working directory)
+2. **Package template**: Built-in template from the npm package
+3. **Legacy template**: Fallback for older versions
+
+### Template Variables
+
+Your custom template has access to these variables:
+- `licenses` - List of license objects with `name`, `version`, `license`, `license_url`, `license_text`
+- `license_counts` - Dictionary of license types and their counts  
+- `total_count` - Total number of packages
+- `copyleft_licenses` - List of packages with copyleft licenses
+
+### Example Customization
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ total_count }} Open Source Licenses - My App</title>
+    <link rel="stylesheet" href="/my-app-styles.css">
+</head>
+<body>
+    <h1>Our {{ total_count }} Open Source Dependencies</h1>
+    <!-- Your custom styling here -->
+</body>
+</html>
+```
+
 ## Requirements
 
 - Node.js project with `package.json`

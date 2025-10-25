@@ -1,5 +1,5 @@
 name: 'Generate Licenses'
-description: 'Generate license CSV, download license texts with caching, and create HTML page'
+description: 'Generate license CSV, download license texts with caching, and create customizable HTML page'
 
 inputs:
   working-directory:
