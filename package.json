@@ -1,6 +1,6 @@
 {
   "name": "@vlindersoftware/generate-licenses",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "GitHub Action for generating comprehensive open source license reports from npm dependencies",
   "main": "action.yml",
   "bin": {

@@ -153,10 +153,16 @@ console.log(`  Output: ${OUTPUT_CSV}`);
 // Generate a summary report
 const licenseCounts = new Map();
 const copyleftLicenses = [];
+const unknownLicenses = [];
 
 for (const pkg of sortedPackages) {
   const license = pkg.license;
   licenseCounts.set(license, (licenseCounts.get(license) || 0) + 1);
+  
+  // Check for unknown licenses
+  if (license === 'UNKNOWN' || license === '' || !license) {
+    unknownLicenses.push({ name: pkg.name, version: pkg.version, license: license || 'UNKNOWN' });
+  }
   
   // Check for copyleft licenses
   const copyleftPatterns = /GPL|AGPL|LGPL|MPL|EPL|CDDL|CPL/i;
@@ -175,6 +181,27 @@ for (const [license, count] of sortedLicenses) {
   console.log(`  ${license}: ${count}`);
 }
 
+// Track if we should fail the build
+let shouldFail = false;
+
+// Check for unknown licenses
+if (unknownLicenses.length > 0) {
+  console.log('\n⚠️  UNKNOWN LICENSES DETECTED:');
+  console.log('===============================');
+  for (const pkg of unknownLicenses) {
+    console.log(`  - ${pkg.name}@${pkg.version}: ${pkg.license}`);
+  }
+  console.log('\nPlease add license information for these packages to license overrides.');
+  
+  if (process.env.FAIL_ON_UNKNOWN === 'true') {
+    console.error('\n❌ Build will fail due to unknown licenses detected.');
+    shouldFail = true;
+  }
+} else {
+  console.log('\n✓ No unknown licenses detected.');
+}
+
+// Check for copyleft licenses
 if (copyleftLicenses.length > 0) {
   console.log('\n⚠️  COPYLEFT LICENSES DETECTED:');
   console.log('================================');
@@ -182,6 +209,18 @@ if (copyleftLicenses.length > 0) {
     console.log(`  - ${pkg.name}@${pkg.version}: ${pkg.license}`);
   }
   console.log('\nPlease review these licenses carefully to ensure compliance.');
+  
+  if (process.env.FAIL_ON_COPYLEFT === 'true') {
+    console.error('\n❌ Build will fail due to copyleft licenses detected.');
+    shouldFail = true;
+  }
 } else {
   console.log('\n✓ No copyleft licenses detected.');
+}
+
+// Exit with error if any failure conditions were met
+if (shouldFail) {
+  console.error('\n❌ Build failed due to license policy violations.');
+  console.error('   Either remove these dependencies or add them to license overrides.');
+  process.exit(1);
 }

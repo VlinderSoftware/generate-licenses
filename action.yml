@@ -9,6 +9,14 @@ inputs:
     description: 'Node.js version to use'
     required: false
     default: '22'
+  fail-on-unknown:
+    description: 'Whether to fail the build if unknown licenses are detected'
+    required: false
+    default: 'false'
+  fail-on-copyleft:
+    description: 'Whether to fail the build if copyleft licenses are detected'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -31,6 +39,9 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: npm run licenses:csv
+      env:
+        FAIL_ON_UNKNOWN: ${{ inputs.fail-on-unknown }}
+        FAIL_ON_COPYLEFT: ${{ inputs.fail-on-copyleft }}
 
     - name: Create cache key from CSV
       id: cache-key
