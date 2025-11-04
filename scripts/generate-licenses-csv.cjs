@@ -12,7 +12,24 @@ const yaml = require('js-yaml');
 
 const OUTPUT_CSV = path.join(process.cwd(), 'licenses/licenses.csv');
 const OUTPUT_DIR = path.dirname(OUTPUT_CSV);
-const OVERRIDES_FILE = path.join(process.cwd(), '.github/license-overrides.yml');
+// Look for overrides file in multiple locations (most specific to least specific)
+const findOverridesFile = () => {
+  const possiblePaths = [
+    path.join(process.cwd(), 'license-overrides.yml'),           // Working directory
+    path.join(process.cwd(), '.github/license-overrides.yml'),  // Working directory .github
+    path.join(process.cwd(), 'licenses/overrides.yml'),         // Working directory licenses folder
+  ];
+  
+  for (const filePath of possiblePaths) {
+    if (fs.existsSync(filePath)) {
+      return filePath;
+    }
+  }
+  
+  return null;
+};
+
+const OVERRIDES_FILE = findOverridesFile();
 
 // Ensure output directory exists
 if (!fs.existsSync(OUTPUT_DIR)) {
@@ -21,7 +38,7 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 
 // Load license overrides
 let overrides = {};
-if (fs.existsSync(OVERRIDES_FILE)) {
+if (OVERRIDES_FILE && fs.existsSync(OVERRIDES_FILE)) {
   try {
     const overridesContent = fs.readFileSync(OVERRIDES_FILE, 'utf8');
     const overridesData = yaml.load(overridesContent);
@@ -32,6 +49,11 @@ if (fs.existsSync(OVERRIDES_FILE)) {
   } catch (err) {
     console.warn(`Warning: Failed to load license overrides: ${err.message}`);
   }
+} else {
+  console.log('No license overrides file found. Checked locations:');
+  console.log('  - license-overrides.yml (working directory)');
+  console.log('  - .github/license-overrides.yml (working directory)');
+  console.log('  - licenses/overrides.yml (working directory)');
 }
 
 console.log('Generating licenses CSV...');
