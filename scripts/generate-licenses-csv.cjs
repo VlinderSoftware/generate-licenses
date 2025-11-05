@@ -59,10 +59,16 @@ if (OVERRIDES_FILE && fs.existsSync(OVERRIDES_FILE)) {
 console.log('Generating licenses CSV...');
 
 // Get all dependencies including nested ones
-// Use --omit=peer to avoid peer dependency errors
+// Use --omit=peer to avoid peer dependency errors  
+// Use --omit=dev to skip development dependencies if PRODUCTION_ONLY is set
 let npmList;
 try {
-  npmList = execSync('npm list --json --all --long --omit=peer', {
+  let omitFlags = '--omit=peer';
+  if (process.env.PRODUCTION_ONLY === 'true') {
+    omitFlags = '--omit=peer --omit=dev';
+  }
+  
+  npmList = execSync(`npm list --json --all --long ${omitFlags}`, {
     cwd: process.cwd(),
     encoding: 'utf8',
     maxBuffer: 10 * 1024 * 1024, // 10MB buffer

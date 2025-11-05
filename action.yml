@@ -17,6 +17,10 @@ inputs:
     description: 'Whether to fail the build if copyleft licenses are detected'
     required: false
     default: 'false'
+  production-only:
+    description: 'Whether to only check production dependencies (excludes devDependencies)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -42,6 +46,7 @@ runs:
       env:
         FAIL_ON_UNKNOWN: ${{ inputs.fail-on-unknown }}
         FAIL_ON_COPYLEFT: ${{ inputs.fail-on-copyleft }}
+        PRODUCTION_ONLY: ${{ inputs.production-only }}
 
     - name: Create cache key from CSV
       id: cache-key
