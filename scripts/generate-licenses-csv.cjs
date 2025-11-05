@@ -61,6 +61,7 @@ console.log('Generating licenses CSV...');
 // Read package.json to determine production vs dev dependencies
 let packageJson = {};
 let productionDeps = new Set();
+console.log(`DEBUG: PRODUCTION_ONLY environment variable = "${process.env.PRODUCTION_ONLY}"`);
 if (process.env.PRODUCTION_ONLY === 'true') {
   try {
     const packageJsonPath = path.join(process.cwd(), 'package.json');
