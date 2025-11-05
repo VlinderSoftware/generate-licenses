@@ -6,7 +6,7 @@
   "bin": {
     "generate-licenses-csv": "./scripts/generate-licenses-csv.cjs",
     "download-licenses": "./scripts/download-licenses.cjs",
-    "generate-licenses-html": "./scripts/generate-licenses-html.py"
+    "generate-licenses-html": "./scripts/generate-licenses-html.cjs"
   },
   "files": [
     "scripts/",
@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "ncc build scripts/generate-licenses-csv.cjs -o dist/csv && ncc build scripts/download-licenses.cjs -o dist/download",
+    "build": "ncc build scripts/generate-licenses-csv.cjs -o dist/csv && ncc build scripts/download-licenses.cjs -o dist/download && ncc build scripts/generate-licenses-html.cjs -o dist/html",
     "test": "jest",
     "test:unit": "jest --testPathIgnorePatterns=integration",
     "test:integration": "jest --config jest.integration.config.js",
@@ -27,7 +27,7 @@
     "test:coverage": "jest --coverage --testPathIgnorePatterns=integration",
     "licenses:csv": "node scripts/generate-licenses-csv.cjs",
     "licenses:download": "node scripts/download-licenses.cjs",
-    "licenses:html": "python3 scripts/generate-licenses-html.py",
+    "licenses:html": "node scripts/generate-licenses-html.cjs",
     "licenses:generate": "npm run licenses:csv && npm run licenses:download && npm run licenses:html"
   },
   "repository": {
@@ -54,7 +54,8 @@
     "js-yaml": "^4.1.0"
   },
   "dependencies": {
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "nunjucks": "^3.2.4"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

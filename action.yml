@@ -30,15 +30,6 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
 
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Install Python dependencies
-      shell: bash
-      run: pip install Jinja2
-
     - name: Generate licenses CSV
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -75,7 +66,7 @@ runs:
     - name: Generate licenses HTML
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: npm run licenses:html
+      run: node ${{ github.action_path }}/dist/html/index.cjs
 
     - name: Display license summary
       shell: bash
