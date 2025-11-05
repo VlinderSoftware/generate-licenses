@@ -58,17 +58,36 @@ if (OVERRIDES_FILE && fs.existsSync(OVERRIDES_FILE)) {
 
 console.log('Generating licenses CSV...');
 
+// Read package.json to determine production vs dev dependencies
+let packageJson = {};
+let productionDeps = new Set();
+if (process.env.PRODUCTION_ONLY === 'true') {
+  try {
+    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    
+    // Collect all production dependencies (including nested ones)
+    const collectProductionDeps = (deps) => {
+      if (!deps) return;
+      for (const dep of Object.keys(deps)) {
+        productionDeps.add(dep);
+      }
+    };
+    
+    collectProductionDeps(packageJson.dependencies);
+    // Note: We intentionally don't add devDependencies to productionDeps
+    
+    console.log(`Production-only mode: filtering to ${productionDeps.size} direct production dependencies`);
+  } catch (err) {
+    console.warn('Warning: Could not read package.json for production-only mode, falling back to full scan');
+  }
+}
+
 // Get all dependencies including nested ones
 // Use --omit=peer to avoid peer dependency errors  
-// Use --omit=dev to skip development dependencies if PRODUCTION_ONLY is set
 let npmList;
 try {
-  let omitFlags = '--omit=peer';
-  if (process.env.PRODUCTION_ONLY === 'true') {
-    omitFlags = '--omit=peer --omit=dev';
-  }
-  
-  npmList = execSync(`npm list --json --all --long ${omitFlags}`, {
+  npmList = execSync(`npm list --json --all --long --omit=peer`, {
     cwd: process.cwd(),
     encoding: 'utf8',
     maxBuffer: 10 * 1024 * 1024, // 10MB buffer
@@ -141,9 +160,24 @@ function extractPackages(deps, prefix = '') {
   }
 }
 
-// Extract packages from dependencies and devDependencies
+// Extract packages from dependencies
 if (dependencies.dependencies) {
-  extractPackages(dependencies.dependencies);
+  if (process.env.PRODUCTION_ONLY === 'true' && productionDeps.size > 0) {
+    // Only extract packages that are in the production dependency tree
+    console.log('Production-only mode: filtering dependency tree...');
+    
+    // Create a filtered dependencies object with only production dependencies
+    const filteredDeps = {};
+    for (const [name, info] of Object.entries(dependencies.dependencies)) {
+      if (productionDeps.has(name)) {
+        filteredDeps[name] = info;
+      }
+    }
+    
+    extractPackages(filteredDeps);
+  } else {
+    extractPackages(dependencies.dependencies);
+  }
 }
 
 // Convert to array and sort by name
