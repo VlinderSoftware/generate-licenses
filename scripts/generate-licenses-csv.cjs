@@ -107,10 +107,15 @@ const dependencies = JSON.parse(npmList);
 // Map to store unique packages (name@version)
 const packages = new Map();
 
-function extractPackages(deps, prefix = '') {
+function extractPackages(deps, prefix = '', allowedTopLevel = null) {
   if (!deps) return;
   
   for (const [name, info] of Object.entries(deps)) {
+    // In production-only mode, skip top-level packages that aren't in the allowed set
+    if (allowedTopLevel && !allowedTopLevel.has(name)) {
+      continue;
+    }
+    
     const version = info.version;
     const key = `${name}@${version}`;
     
@@ -154,8 +159,9 @@ function extractPackages(deps, prefix = '') {
     }
     
     // Recursively process dependencies
+    // For nested dependencies, don't filter - they're all needed at runtime
     if (info.dependencies) {
-      extractPackages(info.dependencies, `${prefix}${name} > `);
+      extractPackages(info.dependencies, `${prefix}${name} > `, null);
     }
   }
 }
@@ -165,18 +171,9 @@ if (dependencies.dependencies) {
   if (process.env.PRODUCTION_ONLY === 'true' && productionDeps.size > 0) {
     // Only extract packages that are in the production dependency tree
     console.log('Production-only mode: filtering dependency tree...');
-    
-    // Create a filtered dependencies object with only production dependencies
-    const filteredDeps = {};
-    for (const [name, info] of Object.entries(dependencies.dependencies)) {
-      if (productionDeps.has(name)) {
-        filteredDeps[name] = info;
-      }
-    }
-    
-    extractPackages(filteredDeps);
+    extractPackages(dependencies.dependencies, '', productionDeps);
   } else {
-    extractPackages(dependencies.dependencies);
+    extractPackages(dependencies.dependencies, '', null);
   }
 }
 
