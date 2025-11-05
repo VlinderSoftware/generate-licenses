@@ -37,6 +37,29 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration
 
+      - name: Rebuild dist folder
+        run: npm run build
+
+      - name: Check for dist changes
+        id: dist-changes
+        run: |
+          git add dist/
+          if git diff --cached --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to dist folder"
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in dist folder"
+          fi
+
+      - name: Commit dist changes
+        if: steps.dist-changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -m "chore: rebuild dist after dependency update"
+          git push
+
       - name: Fetch Dependabot metadata
         id: dependabot-metadata
         uses: dependabot/fetch-metadata@v2

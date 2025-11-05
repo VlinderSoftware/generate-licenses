@@ -11,11 +11,13 @@
   "files": [
     "scripts/",
     "templates/",
+    "dist/",
     "action.yml",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
+    "prebuild": "rm -rf dist",
     "build": "ncc build scripts/generate-licenses-csv.cjs -o dist/csv && ncc build scripts/download-licenses.cjs -o dist/download",
     "test": "jest",
     "test:unit": "jest --testPathIgnorePatterns=integration",
