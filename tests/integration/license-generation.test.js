@@ -22,7 +22,7 @@ describe('License Generation Integration Tests', () => {
       scripts: {
         'licenses:csv': 'node ../scripts/generate-licenses-csv.cjs',
         'licenses:download': 'node ../scripts/download-licenses.cjs',
-        'licenses:html': 'python3 ../scripts/generate-licenses-html.py',
+        'licenses:html': 'node ../scripts/generate-licenses-html.cjs',
         'licenses:generate': 'npm run licenses:csv && npm run licenses:download && npm run licenses:html'
       }
     };

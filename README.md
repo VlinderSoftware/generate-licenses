@@ -29,12 +29,11 @@ A GitHub Action that generates comprehensive license information for npm depende
 
 ## What it does
 
-1. **Sets up environments**: Configures Node.js and Python environments
-2. **Installs dependencies**: Installs required tools (`license-checker`, `jinja2`, `js-yaml`)
-3. **Generates CSV**: Scans all npm dependencies and creates a CSV with package info and licenses
-4. **Downloads licenses**: Fetches license texts from unpkg.com with caching
-5. **Creates HTML report**: Uses Jinja2 template to generate a professional HTML page
-6. **Provides summary**: Shows statistics about packages and licenses
+1. **Sets up Node.js environment**: Configures Node.js with required version
+2. **Generates CSV**: Scans npm dependencies and creates a CSV with package info and licenses  
+3. **Downloads licenses**: Fetches license texts from unpkg.com with caching
+4. **Creates HTML report**: Uses Nunjucks templating to generate a professional HTML page
+5. **Provides summary**: Shows statistics about packages and licenses
 
 ## Output Files
 
@@ -141,10 +140,12 @@ Your custom template has access to these variables:
 
 ## Dependencies
 
-The action automatically installs:
-- `license-checker` (npm) - For scanning dependencies
-- `js-yaml` (npm) - For parsing override configuration
-- `Jinja2` (Python) - For HTML template rendering
+The action uses self-contained bundled scripts with all dependencies included:
+- `license-checker` - For scanning npm dependencies  
+- `js-yaml` - For parsing override configuration
+- `nunjucks` - For Jinja2-compatible HTML template rendering
+
+All dependencies are bundled using `@vercel/ncc` for fast, reliable execution.
 
 ## Caching
 
