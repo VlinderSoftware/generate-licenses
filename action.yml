@@ -42,7 +42,7 @@ runs:
     - name: Generate licenses CSV
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: node ${{ github.action_path }}/scripts/generate-licenses-csv.cjs
+      run: node ${{ github.action_path }}/dist/csv/index.cjs
       env:
         FAIL_ON_UNKNOWN: ${{ inputs.fail-on-unknown }}
         FAIL_ON_COPYLEFT: ${{ inputs.fail-on-copyleft }}
@@ -70,7 +70,7 @@ runs:
     - name: Download license files
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: npm run licenses:download
+      run: node ${{ github.action_path }}/dist/download/index.cjs
 
     - name: Generate licenses HTML
       shell: bash
