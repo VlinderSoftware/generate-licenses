@@ -195,7 +195,7 @@ async function downloadLicense(pkg) {
   
   // Check cache
   if (cache[cacheKey] && fs.existsSync(path.join(LICENSES_DIR, cache[cacheKey]))) {
-    return { success: true, filename: cache[cacheKey] };
+    return { success: true, filename: cache[cacheKey], cached: true };
   }
   
   const filename = `${sanitizeFilename(pkg.name)}-${sanitizeFilename(pkg.version)}.txt`;
@@ -214,14 +214,18 @@ async function downloadLicense(pkg) {
     try {
       await downloadFile(url, filepath);
       cache[cacheKey] = filename;
-      return { success: true, filename };
+      return { success: true, filename, cached: false };
     } catch (err) {
       // Try next URL
     }
   }
   
-  // If download failed, return failure instead of creating placeholder
-  return { success: false, package: `${pkg.name}@${pkg.version}` };
+  // If download failed, return failure info
+  return { 
+    success: false, 
+    package: `${pkg.name}@${pkg.version}`,
+    error: 'License file not found in package'
+  };
 }
 
 // Process packages
@@ -229,30 +233,33 @@ async function processPackages() {
   const packagesArray = Array.from(packages.values());
   let downloaded = 0;
   let cached = 0;
-  const failedPackages = [];
+  const failures = [];
   
   for (let i = 0; i < packagesArray.length; i++) {
     const pkg = packagesArray[i];
-    const cacheKey = `${pkg.name}@${pkg.version}`;
     
     try {
-      if (cache[cacheKey]) {
-        cached++;
-      } else {
-        const result = await downloadLicense(pkg);
-        if (result.success) {
-          downloaded++;
+      const result = await downloadLicense(pkg);
+      
+      if (result.success) {
+        if (result.cached) {
+          cached++;
         } else {
-          failedPackages.push(result.package);
+          downloaded++;
         }
+      } else {
+        failures.push(result);
       }
       
       if ((i + 1) % 50 === 0) {
         console.log(`  Progress: ${i + 1}/${packagesArray.length} packages...`);
       }
     } catch (err) {
-      failedPackages.push(`${pkg.name}@${pkg.version}`);
-      console.error(`  ✗ Failed to download license for ${pkg.name}@${pkg.version}: ${err.message}`);
+      failures.push({
+        success: false,
+        package: `${pkg.name}@${pkg.version}`,
+        error: err.message
+      });
     }
   }
   
@@ -263,12 +270,19 @@ async function processPackages() {
   console.log(`  Downloaded: ${downloaded}`);
   console.log(`  Cached: ${cached}`);
   
-  if (failedPackages.length > 0) {
-    console.log(`\n❌ Failed to download licenses for ${failedPackages.length} packages:`);
-    failedPackages.forEach(pkg => console.log(`  - ${pkg}`));
-    console.log(`\nPlease add manual overrides to license-overrides.yml for these packages,`);
-    console.log(`or contact the package maintainers to include license files in their npm packages.`);
-    throw new Error(`License download failed for ${failedPackages.length} packages`);
+  if (failures.length > 0) {
+    console.log(`\n❌ Failed to download licenses for ${failures.length} packages:`);
+    failures.forEach(failure => {
+      console.log(`  - ${failure.package}: ${failure.error}`);
+    });
+    
+    console.log(`\n💡 To fix these failures:`);
+    console.log(`   1. Add manual overrides to license-overrides.yml`);
+    console.log(`   2. Or contact package maintainers to include license files`);
+    console.log(`   3. Set fail-on-missing-licenses: false to allow missing licenses`);
+    
+    // Fail the action
+    process.exit(1);
   }
 }
 
