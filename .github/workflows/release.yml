@@ -29,7 +29,7 @@ jobs:
 
       - name: Auto Version
         id: version
-        uses: VlinderSoftware/autoversion@v1
+        uses: VlinderSoftware/autoversion@8ad2edc
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           tag-prefix: 'v'
