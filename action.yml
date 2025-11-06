@@ -21,6 +21,10 @@ inputs:
     description: 'Whether to only check production dependencies (excludes devDependencies)'
     required: false
     default: 'false'
+  fail-on-missing-licenses:
+    description: 'Whether to fail the build if license files cannot be downloaded'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
