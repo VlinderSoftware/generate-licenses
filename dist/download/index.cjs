@@ -2,14 +2,6 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 317:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("child_process");
-
-/***/ }),
-
 /***/ 896:
 /***/ ((module) => {
 
@@ -76,20 +68,26 @@ var __webpack_exports__ = {};
 
 /**
  * Download license files for all npm dependencies
- * Reads from package.json and downloads LICENSE files from npm/github
+ * Reads from licenses.csv to only download licenses for packages that will be included in the final report
  */
 
 const fs = __nccwpck_require__(896);
 const path = __nccwpck_require__(928);
 const https = __nccwpck_require__(692);
-const { execSync } = __nccwpck_require__(317);
 
 const LICENSES_DIR = path.join(process.cwd(), 'licenses/texts');
+const LICENSES_CSV = path.join(process.cwd(), 'licenses/licenses.csv');
 const CACHE_FILE = path.join(process.cwd(), 'licenses/cache.json');
 
 // Ensure output directory exists
 if (!fs.existsSync(LICENSES_DIR)) {
   fs.mkdirSync(LICENSES_DIR, { recursive: true });
+}
+
+// Check if CSV file exists
+if (!fs.existsSync(LICENSES_CSV)) {
+  console.error('Error: licenses.csv not found. Please run generate-licenses-csv first.');
+  process.exit(1);
 }
 
 // Load cache
@@ -100,51 +98,27 @@ if (fs.existsSync(CACHE_FILE)) {
 
 console.log('Downloading license files...');
 
-// Get all dependencies
-let npmList;
-try {
-  npmList = execSync('npm list --json --all --omit=peer', {
-    cwd: process.cwd(),
-    encoding: 'utf8',
-    maxBuffer: 10 * 1024 * 1024,
-  });
-} catch (err) {
-  // npm list returns non-zero exit code even with valid output when there are warnings
-  if (err.stdout) {
-    npmList = err.stdout;
-  } else {
-    throw err;
-  }
-}
-
-const dependencies = JSON.parse(npmList);
-
-// Track unique packages
+// Read packages from CSV file
+const csvContent = fs.readFileSync(LICENSES_CSV, 'utf8');
+const lines = csvContent.split('\n').slice(1); // Skip header
 const packages = new Map();
 
-function extractPackages(deps) {
-  if (!deps) return;
+// Parse CSV to get package list
+for (const line of lines) {
+  if (!line.trim()) continue;
   
-  for (const [name, info] of Object.entries(deps)) {
-    const version = info.version;
-    const key = `${name}@${version}`;
-    
-    if (!packages.has(key) && info.resolved) {
-      packages.set(key, {
-        name,
-        version,
-        resolved: info.resolved,
-      });
-    }
-    
-    if (info.dependencies) {
-      extractPackages(info.dependencies);
-    }
-  }
-}
-
-if (dependencies.dependencies) {
-  extractPackages(dependencies.dependencies);
+  const [component] = line.split(',');
+  if (!component) continue;
+  
+  // Parse component name and version
+  const lastAtIndex = component.lastIndexOf('@');
+  if (lastAtIndex <= 0) continue; // Skip if no @ or @ is at start
+  
+  const name = component.substring(0, lastAtIndex);
+  const version = component.substring(lastAtIndex + 1);
+  const key = `${name}@${version}`;
+  
+  packages.set(key, { name, version });
 }
 
 // Download function with promise
