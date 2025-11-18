@@ -79,8 +79,13 @@ const LICENSES_DIR = path.join(process.cwd(), 'licenses/texts');
 const LICENSES_CSV = path.join(process.cwd(), 'licenses/licenses.csv');
 const CACHE_FILE = path.join(process.cwd(), 'licenses/cache.json');
 
+console.log(`LICENSES_DIR=${LICENSES_DIR}`);
+console.log(`LICENSES_CSV=${LICENSES_CSV}`);
+console.log(`CACHE_FILE=${CACHE_FILE}`);
+
 // Ensure output directory exists
 if (!fs.existsSync(LICENSES_DIR)) {
+  console.warn(`${LICENSES_DIR} does not exist -- creating it`);
   fs.mkdirSync(LICENSES_DIR, { recursive: true });
 }
 
@@ -93,6 +98,7 @@ if (!fs.existsSync(LICENSES_CSV)) {
 // Load cache
 let cache = {};
 if (fs.existsSync(CACHE_FILE)) {
+  console.log(`Loading ${CACHE_FILE}`);
   cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
 }
 
@@ -103,27 +109,33 @@ const csvContent = fs.readFileSync(LICENSES_CSV, 'utf8');
 const lines = csvContent.split('\n').slice(1); // Skip header
 const packages = new Map();
 
+console.log(`Read ${lines.length} lines from the CSV file`);
+
 // Parse CSV to get package list
+let i = 1; // first line is a comment
 for (const line of lines) {
   if (!line.trim()) continue;
+  i = i + 1;
   
-  const [component] = line.split(',');
-  if (!component) continue;
+  const [component, version] = line.split(',');
+  if (!component){
+    console.warn(`Skipping line ${i} due to missing component.`);
+    continue;
+  }
+  if (!version){
+    console.warn(`Skipping line ${i} due to missing version.`);
+    continue;
+  }
   
-  // Parse component name and version
-  const lastAtIndex = component.lastIndexOf('@');
-  if (lastAtIndex <= 0) continue; // Skip if no @ or @ is at start
+  const key = `${component}@${version}`;
   
-  const name = component.substring(0, lastAtIndex);
-  const version = component.substring(lastAtIndex + 1);
-  const key = `${name}@${version}`;
-  
-  packages.set(key, { name, version });
+  packages.set(key, { name: component, version });
 }
 
 // Download function with promise
 function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
+    console.log(`Downloading ${url} to ${dest}`);
     https.get(url, { 
       headers: { 'User-Agent': 'Mozilla/5.0' },
       timeout: 10000 
