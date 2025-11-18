@@ -6,6 +6,7 @@
  */
 
 const fs = require('fs');
+const csv = require('csv-parser');
 const path = require('path');
 const https = require('https');
 
@@ -13,57 +14,30 @@ const LICENSES_DIR = path.join(process.cwd(), 'licenses/texts');
 const LICENSES_CSV = path.join(process.cwd(), 'licenses/licenses.csv');
 const CACHE_FILE = path.join(process.cwd(), 'licenses/cache.json');
 
-console.log(`LICENSES_DIR=${LICENSES_DIR}`);
-console.log(`LICENSES_CSV=${LICENSES_CSV}`);
-console.log(`CACHE_FILE=${CACHE_FILE}`);
-
-// Ensure output directory exists
-if (!fs.existsSync(LICENSES_DIR)) {
-  console.warn(`${LICENSES_DIR} does not exist -- creating it`);
-  fs.mkdirSync(LICENSES_DIR, { recursive: true });
-}
-
-// Check if CSV file exists
-if (!fs.existsSync(LICENSES_CSV)) {
-  console.error('Error: licenses.csv not found. Please run generate-licenses-csv first.');
-  process.exit(1);
-}
-
-// Load cache
-let cache = {};
-if (fs.existsSync(CACHE_FILE)) {
-  console.log(`Loading ${CACHE_FILE}`);
-  cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
-}
-
-console.log('Downloading license files...');
-
-// Read packages from CSV file
-const csvContent = fs.readFileSync(LICENSES_CSV, 'utf8');
-const lines = csvContent.split('\n').slice(1); // Skip header
-const packages = new Map();
-
-console.log(`Read ${lines.length} lines from the CSV file`);
-
-// Parse CSV to get package list
-let i = 1; // first line is a comment
-for (const line of lines) {
-  if (!line.trim()) continue;
-  i = i + 1;
-  
-  const [component, version] = line.split(',');
-  if (!component){
-    console.warn(`Skipping line ${i} due to missing component.`);
-    continue;
+function ensureLicenseDirExists() {
+  // Ensure output directory exists
+  if (!fs.existsSync(LICENSES_DIR)) {
+    console.warn(`${LICENSES_DIR} does not exist -- creating it`);
+    fs.mkdirSync(LICENSES_DIR, { recursive: true });
   }
-  if (!version){
-    console.warn(`Skipping line ${i} due to missing version.`);
-    continue;
+}
+
+function ensureCsvFileExists() {
+  // Check if CSV file exists
+  if (!fs.existsSync(LICENSES_CSV)) {
+    console.error('Error: licenses.csv not found. Please run generate-licenses-csv first.');
+    process.exit(1);
   }
-  
-  const key = `${component}@${version}`;
-  
-  packages.set(key, { name: component, version });
+}
+
+function loadCache() {
+  // Load cache
+  let cache = {};
+  if (fs.existsSync(CACHE_FILE)) {
+    console.log(`Loading ${CACHE_FILE}`);
+    cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+  }
+  return cache;
 }
 
 // Download function with promise
@@ -110,12 +84,12 @@ function sanitizeFilename(name) {
 }
 
 // Try to download license for a package
-async function downloadLicense(pkg) {
+async function downloadLicense(cache, pkg) {
   const cacheKey = `${pkg.name}@${pkg.version}`;
   
   // Check cache
   if (cache[cacheKey] && fs.existsSync(path.join(LICENSES_DIR, cache[cacheKey]))) {
-    return { success: true, filename: cache[cacheKey], cached: true };
+    return [{ success: true, filename: cache[cacheKey], cached: true }, cache];
   }
   
   const filename = `${sanitizeFilename(pkg.name)}-${sanitizeFilename(pkg.version)}.txt`;
@@ -128,29 +102,34 @@ async function downloadLicense(pkg) {
     `https://unpkg.com/${pkg.name}@${pkg.version}/LICENSE.txt`,
     `https://unpkg.com/${pkg.name}@${pkg.version}/license`,
     `https://unpkg.com/${pkg.name}@${pkg.version}/license.md`,
+    `https://unpkg.com/${pkg.name}@${pkg.version}/License.md`,
   ];
   
+  if (pkg.overrideUrl) {
+    urls.push(pkg.overrideUrl);
+  }
+
   for (const url of urls) {
     try {
       await downloadFile(url, filepath);
       cache[cacheKey] = filename;
-      return { success: true, filename, cached: false };
+      return [{ success: true, filename, cached: false }, cache];
     } catch (err) {
       // Try next URL
     }
   }
   
   // If download failed, return failure info
-  return { 
+  return [{ 
     success: false, 
     package: `${pkg.name}@${pkg.version}`,
     error: 'License file not found in package'
-  };
+  }, cache];
 }
 
 // Process packages
-async function processPackages() {
-  const packagesArray = Array.from(packages.values());
+async function processPackages(cache, packagesArray) {
+  //const packagesArray = Array.from(packages.values());
   let downloaded = 0;
   let cached = 0;
   const failures = [];
@@ -159,7 +138,8 @@ async function processPackages() {
     const pkg = packagesArray[i];
     
     try {
-      const result = await downloadLicense(pkg);
+      let result;
+      [result, cache] = await downloadLicense(cache, pkg);
       
       if (result.success) {
         if (result.cached) {
@@ -206,10 +186,55 @@ async function processPackages() {
   }
 }
 
+function parseCsv() {
+  return new Promise((resolve, reject) => {
+    let lines = [];
+    // Read packages from CSV file
+    fs.createReadStream(LICENSES_CSV, 'utf-8')
+      .pipe(csv())
+      .on('data', (data) => lines.push(data))
+      .on('end', () => {
+        resolve(lines);
+      });
+  });
+}
+
+
+// const csvContent = fs.readFileSync(LICENSES_CSV, 'utf8');
+// //const lines = csvContent.split('\n').slice(1); // Skip header
+// const packages = new Map();
+
+// console.log(`Read ${lines.length} lines from the CSV file`);
+
+// // Parse CSV to get package list
+// let i = 1; // first line is a comment
+// for (const line of lines) {
+//   if (!line.trim()) continue;
+//   i = i + 1;
+  
+//   const [component, version, licenseUrl, overrideUrl] = line.split(',');
+//   if (!component){
+//     console.warn(`Skipping line ${i} due to missing component.`);
+//     continue;
+//   }
+//   if (!version){
+//     console.warn(`Skipping line ${i} due to missing version.`);
+//     continue;
+//   }
+  
+//   const key = `${component}@${version}`;
+  
+//   packages.set(key, { name: component, version });
+// }
+
 // Main execution
 async function main() {
   try {
-    await processPackages();
+    ensureLicenseDirExists();
+    ensureCsvFileExists();
+    let cache = loadCache();
+    const lines = await parseCsv();
+    await processPackages(cache, lines);
     process.exit(0);
   } catch (error) {
     console.error('Error:', error);

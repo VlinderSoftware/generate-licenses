@@ -124,6 +124,7 @@ function extractPackages(deps, prefix = '', allowedTopLevel = null) {
       // Get license info
       let license = info.license || 'UNKNOWN';
       let licenseUrl = '';
+      let overrideUrl = '';
       
       // Check for override first
       if (overrides[key]) {
@@ -134,6 +135,7 @@ function extractPackages(deps, prefix = '', allowedTopLevel = null) {
         }
         if (override.licenseUrl) {
           licenseUrl = override.licenseUrl;
+          overrideUrl = override.licenseUrl;
         }
       }
       
@@ -156,6 +158,7 @@ function extractPackages(deps, prefix = '', allowedTopLevel = null) {
         version,
         license,
         licenseUrl,
+        overrideUrl,
       });
     }
     
@@ -184,7 +187,7 @@ const sortedPackages = Array.from(packages.values()).sort((a, b) =>
 );
 
 // Generate CSV
-const csvLines = ['Component Name,Version,License (SPDX ID),License URL'];
+const csvLines = ['name,version,license,licenseUrl,overrideUrl'];
 
 for (const pkg of sortedPackages) {
   // Escape CSV fields if they contain commas or quotes
@@ -198,7 +201,7 @@ for (const pkg of sortedPackages) {
   };
   
   csvLines.push(
-    `${escapeCsv(pkg.name)},${escapeCsv(pkg.version)},${escapeCsv(pkg.license)},${escapeCsv(pkg.licenseUrl)}`
+    `${escapeCsv(pkg.name)},${escapeCsv(pkg.version)},${escapeCsv(pkg.license)},${escapeCsv(pkg.licenseUrl)},${escapeCsv(pkg.overrideUrl)}`
   );
 }
 
