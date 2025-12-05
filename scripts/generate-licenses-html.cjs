@@ -110,12 +110,15 @@ function loadLicenses() {
             row[header] = (values[index] || '').replace(/^"|"$/g, '');
         });
         
-        const name = row['Component Name'];
-        const version = row['Version'];
-        const licenseId = row['License (SPDX ID)'];
-        const licenseUrl = row['License URL'];
+        const name = row['name'];
+        const version = row['version'];
+        const licenseId = row['license'];
+        const licenseUrl = row['licenseUrl'];
+        const overrideUrl = row['overrideUrl'];
         
         if (!name) continue; // Skip empty rows
+
+        if (overrideUrl) licenseUrl = overrideUrl;
         
         // Try to load license text
         const licenseFilename = sanitizeFilename(name, version);
