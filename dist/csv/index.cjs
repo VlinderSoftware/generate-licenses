@@ -4176,7 +4176,7 @@ var __webpack_exports__ = {};
 
 /**
  * Generate a CSV file of all npm dependencies with their licenses
- * Output format: Component Name, Version, License (SPDX ID), License URL
+ * Output format: name,version,license,licenseUrl,overrideUrl
  */
 
 const fs = __nccwpck_require__(896);
