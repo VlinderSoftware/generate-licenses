@@ -250,15 +250,16 @@
             
             <div class="license-counts">
                 <strong>License Distribution:</strong>
-                {% for license_id, count in license_counts[:10] %}
+                {% set top10_licenses = license_counts | slice(0, 10) %}
+                {% for license_id, count in top10_licenses %}
                 <div class="license-count-item">
                     <span>{{ license_id }}</span>
                     <span><strong>{{ count }}</strong> packages</span>
                 </div>
                 {% endfor %}
-                {% if license_counts|length > 10 %}
+                {% if license_counts | length > 10 %}
                 <div class="license-count-item">
-                    <span><em>... and {{ license_counts|length - 10 }} more</em></span>
+                    <span><em>... and {{ (license_counts | length) - 10 }} more</em></span>
                 </div>
                 {% endif %}
             </div>
