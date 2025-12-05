@@ -113,7 +113,7 @@ function loadLicenses() {
         const name = row['name'];
         const version = row['version'];
         const licenseId = row['license'];
-        const licenseUrl = row['licenseUrl'];
+        let licenseUrl = row['licenseUrl'];
         const overrideUrl = row['overrideUrl'];
         
         if (!name) continue; // Skip empty rows
